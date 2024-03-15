@@ -22,16 +22,7 @@ def main():
         "indianmusafterdetoxify.csv"
     ]
 
-    csv_paths = [f"{DATA_DIR}/{file}" for file in DATA_FILES]
-
-    all_texts, all_labels = load_data(csv_paths)
-
-    CHECKPOINT = f"{PROJECT_DIR}/pretrained-model" if os.path.exists("pretrained-model") else "distilbert-base-uncased"
-    tokenizer = DistilBertTokenizer.from_pretrained(CHECKPOINT)
-    model = DistilBertForSequenceClassification.from_pretrained(CHECKPOINT)
-    model.to(device)
-    print()
-
+    MODEL_CHECKPOINT = f"{PROJECT_DIR}/pretrained-model" if os.path.exists("pretrained-model") else "distilbert-base-uncased"
     EPOCHS = 20
     BATCH_SIZE = 128
     SPLITS = 5
@@ -39,6 +30,15 @@ def main():
     INIT_LR = 1e-1
     SCH_STEP = 5
     SCH_GAMMA = 0.1
+
+    csv_paths = [f"{DATA_DIR}/{file}" for file in DATA_FILES]
+
+    all_texts, all_labels = load_data(csv_paths)
+
+    tokenizer = DistilBertTokenizer.from_pretrained(MODEL_CHECKPOINT)
+    model = DistilBertForSequenceClassification.from_pretrained(MODEL_CHECKPOINT)
+    model.to(device)
+    print()
 
     optimizer = torch.optim.Adam(model.parameters(), lr=INIT_LR)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=SCH_STEP, gamma=SCH_GAMMA, verbose=True)
