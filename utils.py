@@ -1,11 +1,13 @@
-import numpy as np, pandas as pd, torch, os
+import numpy as np, pandas as pd, torch, os, warnings
 from torch.utils.data import TensorDataset, DataLoader
 from transformers import DistilBertForSequenceClassification, DistilBertTokenizer
 # from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import f1_score, accuracy_score
 from time import perf_counter
 
-from configs import FLT_PREC, PROJECT_DIR, MODEL_PATH, TOKENIZER_PATH
+from configs import FLT_PREC
+
+warnings.filterwarnings("ignore")
 
 def load_data(csv_paths):
     all_texts, all_labels = [], []
@@ -21,16 +23,18 @@ def load_data(csv_paths):
     data = np.stack((all_texts, all_labels), axis=1)
     return np.random.permutation(data)
 
-def load_model(model_path, tokenizer_path, device):
-    if not os.path.exists(f"{PROJECT_DIR}/distilbert"):
-        DistilBertTokenizer.from_pretrained("distilbert-base-uncased").save_pretrained(TOKENIZER_PATH)
-        DistilBertForSequenceClassification.from_pretrained("distilbert-base-uncased").save_pretrained(MODEL_PATH)
-        print(f"\nDistilbert model and tokenizer saved in directory {PROJECT_DIR}/distilbert\n")
+def load_model(model_dir, device):
+    tokenizer_path = f"{model_dir}/tokenizer"
+    model_path = f"{model_dir}/model"
+    if not os.path.exists(model_dir):
+        DistilBertTokenizer.from_pretrained("distilbert-base-uncased").save_pretrained(tokenizer_path)
+        DistilBertForSequenceClassification.from_pretrained("distilbert-base-uncased").save_pretrained(model_path)
+        print(f"\nDistilbert model and tokenizer saved in directory {model_dir}\n")
 
-    tokenizer = DistilBertTokenizer.from_pretrained(TOKENIZER_PATH)
-    model = DistilBertForSequenceClassification.from_pretrained(MODEL_PATH)
+    tokenizer = DistilBertTokenizer.from_pretrained(tokenizer_path)
+    model = DistilBertForSequenceClassification.from_pretrained(model_path)
     model.to(device)
-    print(f"Model loaded from {MODEL_PATH}\n")
+    print(f"Model loaded from {model_dir}\n")
     return model, tokenizer
 
 def train_test_split(data, train_test_ratio, val_test_ratio):

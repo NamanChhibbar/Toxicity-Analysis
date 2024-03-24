@@ -1,9 +1,7 @@
-import torch, warnings, matplotlib.pyplot as plt
+import torch, matplotlib.pyplot as plt
 
 from configs import *
 from utils import load_data, load_model, train_test_split, train_and_validate
-
-warnings.filterwarnings("ignore")
 
 def main():
     print()
@@ -14,19 +12,19 @@ def main():
     data = load_data(csv_paths)
     train_data, test_data = train_test_split(data, TRAIN_TEST_RATIO, VAL_TEST_RATIO)
 
-    model, tokenizer = load_model(MODEL_PATH, TOKENIZER_PATH, device)
+    model, tokenizer = load_model(MODEL_DIR, device)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=INIT_LR)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=SCH_STEP, gamma=SCH_GAMMA, verbose=True)
 
     train_loss, val_loss, val_acc, val_f1 = train_and_validate(
         train_data, test_data, model, tokenizer,
-        SENTENCE_MAXLEN, optimizer, scheduler, device,
+        SENT_MAXLEN, optimizer, scheduler, device,
         BATCH_SIZE, EPOCHS
     )
 
-    model.save_pretrained(f"{MODEL_PATH}")
-    print(f"Model trained and saved in {MODEL_PATH}")
+    model.save_pretrained(f"{MODEL_DIR}/model")
+    print(f"Model trained and saved in {MODEL_DIR}")
 
     x = range(len(train_loss))
     plt.plot(x, train_loss, label="Train loss")
@@ -34,7 +32,7 @@ def main():
     plt.xlabel("Epochs")
     plt.ylabel("Loss")
     plt.legend()
-    plt.savefig(f"{PROJECT_DIR}/train-validation-loss.jpg")
+    plt.savefig(f"{PROJECT_DIR}/Naman-work/train-validation-loss.jpg")
 
 if __name__ == "__main__":
     main()
