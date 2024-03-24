@@ -32,7 +32,7 @@ def main():
     plt.xlabel("Epochs")
     plt.ylabel("Loss")
     plt.legend()
-    plt.savefig(f"{PROJECT_DIR}/Naman-work/train-validation-loss.jpg")
+    plt.savefig(f"{PROJECT_DIR}/train-validation-loss.jpg")
 
 if __name__ == "__main__":
     main()
