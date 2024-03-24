@@ -1,6 +1,6 @@
 import numpy as np, pandas as pd, torch, os, warnings
 from torch.utils.data import TensorDataset, DataLoader
-from transformers import DistilBertForSequenceClassification, DistilBertTokenizer
+from transformers import DistilBertForSequenceClassification as Model, DistilBertTokenizer as Tokenizer
 # from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import f1_score, accuracy_score
 from time import perf_counter
@@ -27,12 +27,12 @@ def load_model(model_dir, device):
     tokenizer_path = f"{model_dir}/tokenizer"
     model_path = f"{model_dir}/model"
     if not os.path.exists(model_dir):
-        DistilBertTokenizer.from_pretrained("distilbert-base-uncased").save_pretrained(tokenizer_path)
-        DistilBertForSequenceClassification.from_pretrained("distilbert-base-uncased").save_pretrained(model_path)
+        Tokenizer.from_pretrained("distilbert-base-uncased").save_pretrained(tokenizer_path)
+        Model.from_pretrained("distilbert-base-uncased").save_pretrained(model_path)
         print(f"\nDistilbert model and tokenizer saved in directory {model_dir}\n")
 
-    tokenizer = DistilBertTokenizer.from_pretrained(tokenizer_path)
-    model = DistilBertForSequenceClassification.from_pretrained(model_path)
+    tokenizer = Tokenizer.from_pretrained(tokenizer_path)
+    model = Model.from_pretrained(model_path)
     model.to(device)
     print(f"Model loaded from {model_dir}\n")
     return model, tokenizer
