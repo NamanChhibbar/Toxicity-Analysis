@@ -9,18 +9,19 @@ DATA_FILES = [
     "sample.csv"
 ]
 
-# Float precision for printing
+# Print settings
 FLT_PREC = 4
+WHITE_SPACE = 100
 
 # Data processing parameters
-TRAIN_RATIO = 0.8
+TRAIN_RATIO = 0.7
 VAL_RATIO = 0.5
 SENT_MAXLEN = 120
 SHUFFLE = True
 
 # Training parameters
-EPOCHS = 40
-BATCH_SIZE = 64
+EPOCHS = 10
+BATCH_SIZE = 32
 INIT_LR = 0.1
-SCH_STEP = 8
-SCH_GAMMA = 0.2
+SCH_STEP = 5
+SCH_GAMMA = 0.1

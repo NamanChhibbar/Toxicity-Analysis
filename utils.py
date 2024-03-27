@@ -5,7 +5,7 @@ from transformers import DistilBertForSequenceClassification as Model, DistilBer
 from sklearn.metrics import f1_score, accuracy_score
 from time import perf_counter
 
-from configs import FLT_PREC
+from configs import FLT_PREC, WHITE_SPACE
 
 warnings.filterwarnings("ignore")
 
@@ -57,7 +57,7 @@ def tokenize_and_batch(data, tokenizer, sent_maxlen, batch_size=None):
 def train_and_validate(
         train_data, val_data, model, tokenizer,
         sent_maxlen, optimizer, scheduler, device,
-        batch_size=32, epochs=20
+        batch_size=32, epochs=10
 ):
 
     train_set = tokenize_and_batch(train_data, tokenizer, sent_maxlen, batch_size)
@@ -80,22 +80,36 @@ def train_and_validate(
             scheduler.step()
             optimizer.zero_grad()
             time = (perf_counter() - start_time) * 1000
+            epoch_loss += loss.item()
 
-            print(
-                f"\rEpoch: {epoch + 1}/{epochs} "
+            time_remaining = (time * ((epochs - epoch) * batches - batch - 1)) // 1000
+            seconds = time_remaining % 60
+            minutes = (time_remaining // 60) % 60
+            hours = time_remaining // 3600
+
+            print("\r", " " * WHITE_SPACE, end="\r")
+            if batch + 1 == batches: print(
+                f"Epoch {epoch + 1} average loss: {epoch_loss / epochs}"
+            )
+            else: print(
+                f"Epoch: {epoch + 1}/{epochs} "
                 f"Batch: {batch + 1}/{batches} "
-                f"Time: {round(time, FLT_PREC)} ms "
-                f"Loss: {round(loss.item(), FLT_PREC)}",
+                f"Time: {round(time, FLT_PREC)} ms/batch "
+                f"Loss: {round(loss.item(), FLT_PREC)} "
+                f"Time remaining: {hours}h {minutes}m {seconds}s",
                 end="\t\t"
             )
-            epoch_loss += loss.item()
         train_loss.append(epoch_loss / batches)
 
         val_loss_, val_accuracy_, val_f1_ = test_model(val_data, model)
         val_loss.append(val_loss_)
         val_accuracy.append(val_accuracy_)
         val_f1.append(val_f1_)
-        print()
+        print(
+            f"Validation loss: {round(val_loss_, FLT_PREC)}\n"
+            f"Validation accuracy: {round(val_accuracy_, FLT_PREC)}\n"
+            f"Validation F1 = {round(val_f1_, FLT_PREC)}\n"
+        )
     print()
 
     return train_loss, val_loss, val_accuracy, val_f1
