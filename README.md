@@ -20,7 +20,7 @@ Before training the model, ensure that data file paths, model parameters, and ot
 
 ## Training the model
 
-The main training loop is implemented in [train.py](train.py). Execute it as a Python script to begin training. The model will be fetched from Hugging Face based on the configurations specified in [configs.py](configs.py) and will be saved in the project directory. If a model is already saved, it will be loaded from the directory itself. After training, the model will overwrite the pre-trained model. Additionally, the code will generate a graph visualizing the training and validation loss over epochs, saved as `train-validation-loss.jpg`.
+The main training loop is implemented in [train.py](train.py). Execute it as a Python script to begin training. The model will be fetched from Hugging Face based on the configurations specified in [configs.py](configs.py) and will be saved in the project directory. If a model is already saved, it will be loaded from the directory itself. After training, the model will overwrite the pre-trained model. Additionally, the code will generate a graph visualizing the model performance on training and validation sets over epochs, saved as `model-performance.jpg`.
 
 ## Getting toxicity score on text
 
