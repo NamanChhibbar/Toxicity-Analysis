@@ -1,7 +1,7 @@
 import numpy as np, pandas as pd, torch, os, warnings
 from torch.utils.data import TensorDataset, DataLoader
+from torch.nn.functional import softmax
 from transformers import DistilBertForSequenceClassification as Model, DistilBertTokenizer as Tokenizer
-# from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import f1_score, accuracy_score
 from time import perf_counter
 
@@ -9,7 +9,7 @@ from configs import FLT_PREC
 
 warnings.filterwarnings("ignore")
 
-def load_data(csv_paths):
+def load_data(csv_paths, shuffle=False):
     all_texts, all_labels = [], []
     for path in csv_paths:
         df = pd.read_csv(path)
@@ -21,7 +21,7 @@ def load_data(csv_paths):
         print(f"File loaded: {path}")
     print()
     data = np.stack((all_texts, all_labels), axis=1)
-    return np.random.permutation(data)
+    return np.random.permutation(data) if shuffle else data
 
 def load_model(model_dir, device):
     tokenizer_path = f"{model_dir}/tokenizer"
@@ -37,28 +37,31 @@ def load_model(model_dir, device):
     print(f"Model loaded from {model_dir}\n")
     return model, tokenizer
 
-def train_test_split(data, train_test_ratio, val_test_ratio):
-    train_test_split = int(len(data) * train_test_ratio)
-    train_data = data[:train_test_split]
-    test_data = data[train_test_split:]
-    return train_data, test_data
+def train_test_split(data, train_ratio, val_ratio):
+    train_split = int(len(data) * train_ratio)
+    train_data = data[:train_split]
+    test_data = data[train_split:]
+    val_split = int(val_ratio * len(test_data))
+    val_data = test_data[:val_split]
+    test_data = test_data[val_split:]
+    return train_data, val_data, test_data
 
-def tokenize_and_batch(data, tokenizer, tokenizer_maxlen, batch_size=None, shuffle=True):
+def tokenize_and_batch(data, tokenizer, sent_maxlen, batch_size=None):
     texts, labels = data[:, 0], data[:, 1].astype(np.float64)
-    tokenized = tokenizer(list(texts), padding=True, truncation=True, max_length=tokenizer_maxlen, return_tensors="pt")
+    tokenized = tokenizer(list(texts), padding=True, truncation=True, max_length=sent_maxlen, return_tensors="pt")
     dataset = TensorDataset(tokenized["input_ids"], torch.tensor(labels).to(torch.int64), tokenized["attention_mask"])
-    if batch_size:
-        return DataLoader(dataset, batch_size=batch_size, shuffle=shuffle)
-    return dataset
+    if not batch_size:
+        return dataset.tensors
+    return DataLoader(dataset, batch_size=batch_size)
 
 def train_and_validate(
         train_data, val_data, model, tokenizer,
-        tokenizer_maxlen, optimizer, scheduler, device,
-        batch_size=32, epochs=20, shuffle=True
+        sent_maxlen, optimizer, scheduler, device,
+        batch_size=32, epochs=20
 ):
 
-    train_set = tokenize_and_batch(train_data, tokenizer, tokenizer_maxlen, batch_size, shuffle=shuffle)
-    val_inp, val_labels, val_mask = tokenize_and_batch(val_data, tokenizer, tokenizer_maxlen, shuffle=shuffle).tensors
+    train_set = tokenize_and_batch(train_data, tokenizer, sent_maxlen, batch_size)
+    val_data = tokenize_and_batch(val_data, tokenizer, sent_maxlen)
     batches = len(train_set)
 
     train_loss, val_loss, val_accuracy, val_f1 = [], [], [], []
@@ -88,21 +91,27 @@ def train_and_validate(
             epoch_loss += loss.item()
         train_loss.append(epoch_loss / batches)
 
-        model.train(False)
-        with torch.no_grad():
-            output = model(input_ids=val_inp, labels=val_labels, attention_mask=val_mask)
-        logits = output.logits
-        predictions = torch.argmax(logits, dim=-1)
-        val_loss.append(output.loss.item())
-        val_accuracy.append(accuracy_score(val_labels, predictions))
-        val_f1.append(f1_score(val_labels, predictions))
+        val_loss_, val_accuracy_, val_f1_ = test_model(val_data, model)
+        val_loss.append(val_loss_)
+        val_accuracy.append(val_accuracy_)
+        val_f1.append(val_f1_)
         print()
     print()
 
     return train_loss, val_loss, val_accuracy, val_f1
 
+def test_model(test_data, model, tokenizer=None, sent_maxlen=None):
+    if tokenizer:
+        test_data = tokenize_and_batch(test_data, tokenizer, sent_maxlen)
+    test_inp, test_labels, test_mask = test_data
+    model.train(False)
+    with torch.no_grad():
+        output = model(input_ids=test_inp, labels=test_labels, attention_mask=test_mask)
+    predictions = torch.argmax(output.logits, dim=-1)
+    return output.loss.item(), accuracy_score(test_labels, predictions), f1_score(test_labels, predictions)
+
 def toxicity_score(text, model, tokenizer, sent_maxlen):
     tokenized = tokenizer([text], max_length=sent_maxlen, truncation=True, padding=True, return_tensors="pt")
     with torch.no_grad():
         output = model(**tokenized)
-    return torch.argmax(output.logits).item()
+    return torch.nn.functional.softmax(output.logits)[0, 1].item()

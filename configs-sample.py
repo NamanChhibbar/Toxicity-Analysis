@@ -13,9 +13,10 @@ DATA_FILES = [
 FLT_PREC = 4
 
 # Data processing parameters
-TRAIN_TEST_RATIO = 0.8
-VAL_TEST_RATIO = 0.5
+TRAIN_RATIO = 0.8
+VAL_RATIO = 0.5
 SENT_MAXLEN = 120
+SHUFFLE = True
 
 # Training parameters
 EPOCHS = 40
