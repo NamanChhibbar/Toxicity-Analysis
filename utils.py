@@ -1,6 +1,5 @@
 import numpy as np, pandas as pd, torch, os, warnings
 from torch.utils.data import TensorDataset, DataLoader
-from torch.nn.functional import softmax
 from transformers import DistilBertForSequenceClassification as Model, DistilBertTokenizer as Tokenizer
 from sklearn.metrics import f1_score, accuracy_score
 from time import perf_counter
@@ -89,7 +88,7 @@ def train_and_validate(
 
             print("\r", " " * WHITE_SPACE, end="\r")
             if batch + 1 == batches: print(
-                f"Epoch {epoch + 1} average loss: {epoch_loss / epochs}"
+                f"Epoch {epoch + 1} average loss: {round(epoch_loss / epochs, FLT_PREC)}"
             )
             else: print(
                 f"Epoch: {epoch + 1}/{epochs} "
@@ -110,7 +109,6 @@ def train_and_validate(
             f"Validation accuracy: {round(val_accuracy_, FLT_PREC)}\n"
             f"Validation F1 = {round(val_f1_, FLT_PREC)}\n"
         )
-    print()
 
     return train_loss, val_loss, val_accuracy, val_f1
 
