@@ -54,20 +54,27 @@ def tokenize_and_batch(data, tokenizer, sent_maxlen, batch_size=None):
 
 def train_and_validate(
         train_data, val_data, model, tokenizer,
-        sent_maxlen, optimizer, scheduler=None, device="cpu",
+        sent_maxlen, optimizer, scheduler=None,
         batch_size=32, epochs=10
 ):
+    
+    if torch.cuda.is_available():
+        device = torch.device("cuda")
+    elif torch.backends.mps.is_available():
+        device = torch.device("mps")
+    else:
+        device = torch.device("cpu")
 
-    train_set = tokenize_and_batch(train_data, tokenizer, sent_maxlen, batch_size)
+    train_data = tokenize_and_batch(train_data, tokenizer, sent_maxlen, batch_size)
     val_data = tokenize_and_batch(val_data, tokenizer, sent_maxlen)
-    batches = len(train_set)
+    batches = len(train_data)
     train_loss, val_loss, val_accuracy, val_f1 = [], [], [], []
     model.to(device)
 
     for epoch in range(epochs):
         model.train(True)
         epoch_loss = 0
-        for batch, (inp, labels, attention_mask) in enumerate(train_set):
+        for batch, (inp, labels, attention_mask) in enumerate(train_data):
 
             inp = inp.to(device)
             labels = labels.to(device)
@@ -100,7 +107,7 @@ def train_and_validate(
             )
         train_loss.append(epoch_loss / batches)
 
-        val_loss_, val_accuracy_, val_f1_ = test_model(val_data, model)
+        val_loss_, val_accuracy_, val_f1_ = test_model(val_data, model, device)
         val_loss.append(val_loss_)
         val_accuracy.append(val_accuracy_)
         val_f1.append(val_f1_)
@@ -112,14 +119,18 @@ def train_and_validate(
 
     return train_loss, val_loss, val_accuracy, val_f1
 
-def test_model(test_data, model, tokenizer=None, sent_maxlen=None):
+def test_model(test_data, model, device, tokenizer=None, sent_maxlen=None):
     if tokenizer:
         test_data = tokenize_and_batch(test_data, tokenizer, sent_maxlen)
     test_inp, test_labels, test_mask = test_data
+    test_inp = test_inp.to(device)
+    test_labels = test_labels.to(device)
+    test_mask = test_mask.to(device)
     model.train(False)
     with torch.no_grad():
         output = model(input_ids=test_inp, labels=test_labels, attention_mask=test_mask)
-    predictions = torch.argmax(output.logits, dim=-1)
+    test_labels = test_labels.cpu()
+    predictions = torch.argmax(output.logits, dim=-1).cpu()
     return output.loss.item(), accuracy_score(test_labels, predictions), f1_score(test_labels, predictions)
 
 def toxicity_score(text, model, tokenizer, sent_maxlen):

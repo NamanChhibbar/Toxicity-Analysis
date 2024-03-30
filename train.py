@@ -10,8 +10,6 @@ from utils import load_data, load_model, train_test_split, train_and_validate, t
 def main():
     print()
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
     csv_paths = [f"{DATA_DIR}/{file}" for file in DATA_FILES]
     data = load_data(csv_paths, shuffle=SHUFFLE)
     train_data, val_data, test_data = train_test_split(data, TRAIN_RATIO, VAL_RATIO)
@@ -23,7 +21,7 @@ def main():
 
     train_loss, val_loss, val_acc, val_f1 = train_and_validate(
         train_data, val_data, model, tokenizer,
-        SENT_MAXLEN, optimizer, scheduler, device,
+        SENT_MAXLEN, optimizer, scheduler,
         BATCH_SIZE, EPOCHS
     )
 
