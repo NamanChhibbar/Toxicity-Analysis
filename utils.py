@@ -22,7 +22,7 @@ def load_data(csv_paths, shuffle=False):
     data = np.stack((all_texts, all_labels), axis=1)
     return np.random.permutation(data) if shuffle else data
 
-def load_model(model_dir, device):
+def load_model(model_dir):
     tokenizer_path = f"{model_dir}/tokenizer"
     model_path = f"{model_dir}/model"
     if not os.path.exists(model_dir):
@@ -32,7 +32,6 @@ def load_model(model_dir, device):
 
     tokenizer = Tokenizer.from_pretrained(tokenizer_path)
     model = Model.from_pretrained(model_path)
-    model.to(device)
     print(f"Model loaded from {model_dir}\n")
     return model, tokenizer
 
@@ -55,15 +54,16 @@ def tokenize_and_batch(data, tokenizer, sent_maxlen, batch_size=None):
 
 def train_and_validate(
         train_data, val_data, model, tokenizer,
-        sent_maxlen, optimizer, scheduler, device,
+        sent_maxlen, optimizer, scheduler=None, device="cpu",
         batch_size=32, epochs=10
 ):
 
     train_set = tokenize_and_batch(train_data, tokenizer, sent_maxlen, batch_size)
     val_data = tokenize_and_batch(val_data, tokenizer, sent_maxlen)
     batches = len(train_set)
-
     train_loss, val_loss, val_accuracy, val_f1 = [], [], [], []
+    model.to(device)
+
     for epoch in range(epochs):
         model.train(True)
         epoch_loss = 0
@@ -76,7 +76,7 @@ def train_and_validate(
             loss = model(input_ids=inp, labels=labels, attention_mask=attention_mask).loss
             loss.backward()
             optimizer.step()
-            scheduler.step()
+            if scheduler: scheduler.step()
             optimizer.zero_grad()
             time = (perf_counter() - start_time) * 1000
             epoch_loss += loss.item()

@@ -16,7 +16,7 @@ def main():
     data = load_data(csv_paths, shuffle=SHUFFLE)
     train_data, val_data, test_data = train_test_split(data, TRAIN_RATIO, VAL_RATIO)
 
-    model, tokenizer = load_model(MODEL_DIR, device)
+    model, tokenizer = load_model(MODEL_DIR)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=INIT_LR)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=SCH_STEP, gamma=SCH_GAMMA, verbose=True)

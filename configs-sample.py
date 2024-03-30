@@ -22,6 +22,6 @@ SHUFFLE = True
 # Training parameters
 EPOCHS = 10
 BATCH_SIZE = 32
-INIT_LR = 0.1
-SCH_STEP = 5
+INIT_LR = 1e-3
 SCH_GAMMA = 0.1
+SCH_STEP = 5
