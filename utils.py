@@ -53,7 +53,7 @@ def tokenize_and_batch(data, tokenizer, sent_maxlen, batch_size=None):
     return DataLoader(dataset, batch_size=batch_size)
 
 def train_and_validate(
-        train_data, val_data, model, tokenizer,
+        train_data, val_data, test_data, model, tokenizer,
         sent_maxlen, optimizer, scheduler=None,
         batch_size=32, epochs=10
 ):
@@ -67,8 +67,10 @@ def train_and_validate(
 
     train_data = tokenize_and_batch(train_data, tokenizer, sent_maxlen, batch_size)
     val_data = tokenize_and_batch(val_data, tokenizer, sent_maxlen)
+    test_data = tokenize_and_batch(test_data, tokenizer, sent_maxlen)
     batches = len(train_data)
-    train_loss, val_loss, val_accuracy, val_f1 = [], [], [], []
+    train_loss = []
+    val_metrics = {"loss": [], "accuracy": [], "f1": []}
     model.to(device)
 
     for epoch in range(epochs):
@@ -107,21 +109,21 @@ def train_and_validate(
             )
         train_loss.append(epoch_loss / batches)
 
-        val_loss_, val_accuracy_, val_f1_ = test_model(val_data, model, device)
-        val_loss.append(val_loss_)
-        val_accuracy.append(val_accuracy_)
-        val_f1.append(val_f1_)
+        val_loss, val_accuracy, val_f1 = test_model(val_data, model, device)
+        val_metrics["loss"].append(val_loss)
+        val_metrics["accuracy"].append(val_accuracy)
+        val_metrics["f1"].append(val_f1)
         print(
-            f"Validation loss: {round(val_loss_, FLT_PREC)}\n"
-            f"Validation accuracy: {round(val_accuracy_, FLT_PREC)}\n"
-            f"Validation F1 = {round(val_f1_, FLT_PREC)}\n"
+            f"Validation loss: {round(val_loss, FLT_PREC)}\n"
+            f"Validation accuracy: {round(val_accuracy, FLT_PREC)}\n"
+            f"Validation F1 = {round(val_f1, FLT_PREC)}\n"
         )
+    test_loss, test_accuracy, test_f1 = test_model(test_data, model, device)
+    test_metrics = {"loss": test_loss, "accuracy": test_accuracy, "f1": test_f1}
 
-    return train_loss, val_loss, val_accuracy, val_f1
+    return train_loss, val_metrics, test_metrics
 
-def test_model(test_data, model, device, tokenizer=None, sent_maxlen=None):
-    if tokenizer:
-        test_data = tokenize_and_batch(test_data, tokenizer, sent_maxlen)
+def test_model(test_data, model, device):
     test_inp, test_labels, test_mask = test_data
     test_inp = test_inp.to(device)
     test_labels = test_labels.to(device)
