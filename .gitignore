@@ -1,0 +1,13 @@
+.DS_store
+
+__pycache__/
+venv/
+old-work/
+
+Models/
+Performance-Plots/
+Labeled-Data/
+Raw-Data/
+
+temp.ipynb
+configs.py

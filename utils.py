@@ -1,16 +1,14 @@
 import numpy as np, pandas as pd, torch, os, warnings
 from torch.utils.data import TensorDataset, DataLoader
-from transformers import DistilBertForSequenceClassification as Model, DistilBertTokenizer as Tokenizer
+from transformers import AutoModelForSequenceClassification, AutoTokenizer
 from sklearn.metrics import f1_score, accuracy_score
 from time import perf_counter
 
-from configs import FLT_PREC, WHITE_SPACE
-
 warnings.filterwarnings("ignore")
 
-def load_data(csv_paths, shuffle=False):
+def load_data(data_paths, shuffle=False):
     all_texts, all_labels = [], []
-    for path in csv_paths:
+    for path in data_paths:
         df = pd.read_csv(path)
         filter = pd.notnull(df["manual_label"])
         texts = df["text"][filter].tolist()
@@ -22,16 +20,16 @@ def load_data(csv_paths, shuffle=False):
     data = np.stack((all_texts, all_labels), axis=1)
     return np.random.permutation(data) if shuffle else data
 
-def load_model(model_dir):
+def load_model(model, model_dir):
     tokenizer_path = f"{model_dir}/tokenizer"
     model_path = f"{model_dir}/model"
     if not os.path.exists(model_dir):
-        Tokenizer.from_pretrained("distilbert-base-uncased").save_pretrained(tokenizer_path)
-        Model.from_pretrained("distilbert-base-uncased").save_pretrained(model_path)
-        print(f"\nDistilbert model and tokenizer saved in directory {model_dir}\n")
+        AutoTokenizer.from_pretrained(model).save_pretrained(tokenizer_path)
+        AutoModelForSequenceClassification.from_pretrained(model).save_pretrained(model_path)
+        print(f"\n{model} model and tokenizer saved in directory {model_dir}\n")
 
-    tokenizer = Tokenizer.from_pretrained(tokenizer_path)
-    model = Model.from_pretrained(model_path)
+    tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
+    model = AutoModelForSequenceClassification.from_pretrained(model_path)
     print(f"Model loaded from {model_dir}\n")
     return model, tokenizer
 
@@ -55,7 +53,7 @@ def tokenize_and_batch(data, tokenizer, sent_maxlen, batch_size=None):
 def train_and_validate(
         train_data, val_data, test_data, model, tokenizer,
         sent_maxlen, optimizer, scheduler=None,
-        batch_size=32, epochs=10
+        batch_size=32, epochs=10, flt_prec=4, white_space=100
 ):
     
     if torch.cuda.is_available():
@@ -95,15 +93,15 @@ def train_and_validate(
             minutes = (time_remaining // 60) % 60
             hours = time_remaining // 3600
 
-            print("\r", " " * WHITE_SPACE, end="\r")
+            print("\r", " " * white_space, end="\r")
             if batch + 1 == batches: print(
-                f"Epoch {epoch + 1} average loss: {round(epoch_loss / epochs, FLT_PREC)}"
+                f"Epoch {epoch + 1} average loss: {round(epoch_loss / epochs, flt_prec)}"
             )
             else: print(
                 f"Epoch: {epoch + 1}/{epochs} "
                 f"Batch: {batch + 1}/{batches} "
-                f"Time: {round(time, FLT_PREC)} ms/batch "
-                f"Loss: {round(loss.item(), FLT_PREC)} "
+                f"Time: {round(time, flt_prec)} ms/batch "
+                f"Loss: {round(loss.item(), flt_prec)} "
                 f"Time remaining: {hours}h {minutes}m {seconds}s",
                 end="\t\t"
             )
@@ -114,9 +112,9 @@ def train_and_validate(
         val_metrics["accuracy"].append(val_accuracy)
         val_metrics["f1"].append(val_f1)
         print(
-            f"Validation loss: {round(val_loss, FLT_PREC)}\n"
-            f"Validation accuracy: {round(val_accuracy, FLT_PREC)}\n"
-            f"Validation F1 = {round(val_f1, FLT_PREC)}\n"
+            f"Validation loss: {round(val_loss, flt_prec)}\n"
+            f"Validation accuracy: {round(val_accuracy, flt_prec)}\n"
+            f"Validation F1 = {round(val_f1, flt_prec)}\n"
         )
     test_loss, test_accuracy, test_f1 = test_model(test_data, model, device)
     test_metrics = {"loss": test_loss, "accuracy": test_accuracy, "f1": test_f1}
