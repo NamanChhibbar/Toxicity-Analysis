@@ -41,9 +41,9 @@ def main():
 
     print(
         "Performance metrics on test set:\n"
-        f"Test loss = {test_metrics["loss"]}\n"
-        f"Test accuracy = {test_metrics["accuracy"]}\n"
-        f"Test F1 score = {test_metrics["f1"]}\n"
+        f"Test loss = {round(test_metrics["loss"], FLT_PREC)}\n"
+        f"Test accuracy = {round(test_metrics["accuracy"], FLT_PREC)}\n"
+        f"Test F1 score = {round(test_metrics["f1"], FLT_PREC)}\n"
     )
 
 if __name__ == "__main__":
