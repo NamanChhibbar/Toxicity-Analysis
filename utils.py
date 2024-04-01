@@ -7,6 +7,16 @@ from time import perf_counter
 warnings.filterwarnings("ignore")
 
 def load_data(data_paths, shuffle=False):
+    """
+    Loads and shuffles data in a numpy array
+
+    ## Parameters
+    `data_paths`: List of strings containing path to data files
+    `shuffle`: Boolean indicating whether to shuffle data (false by default)
+
+    ## Returns
+    `np.ndarray` of shape `(None,)`
+    """
     all_texts, all_labels = [], []
     for path in data_paths:
         df = pd.read_csv(path)
@@ -21,6 +31,17 @@ def load_data(data_paths, shuffle=False):
     return np.random.permutation(data) if shuffle else data
 
 def load_model(model, model_dir):
+    """
+    Loads a Hugging Face model and tokenizer from the given checkpoint or a local directory
+
+    ## Parameters
+    `model`: Hugging Face checkpoint to download the model, if not found
+    `model_dir`: Path to local directory where model and tokenizer are saved. Model and
+    tokenizer should be saved as `{model_dir}/Model` and `{model_dir}/Tokenizer`
+
+    ## Returns
+    `model, tokenizer` of type `Model` and `Tokenizer` (aliased)
+    """
     tokenizer_path = f"{model_dir}/tokenizer"
     model_path = f"{model_dir}/model"
     if not os.path.exists(model_dir):
