@@ -5,7 +5,7 @@ DATA_FILES = [
 ]
 
 # Make sure this is a valid Hugging Face model
-MODEL = "distilbert-base-uncased"
+MODEL = "distilbert/distilbert-base-uncased"
 
 # Data pre-processing parameters
 TRAIN_RATIO = 0.7

@@ -1,6 +1,6 @@
 import numpy as np, pandas as pd, torch, os, warnings
 from torch.utils.data import TensorDataset, DataLoader
-from transformers import AutoModelForSequenceClassification, AutoTokenizer
+from transformers import AutoModelForSequenceClassification as Model, AutoTokenizer as Tokenizer
 from sklearn.metrics import f1_score, accuracy_score
 from time import perf_counter
 
@@ -24,12 +24,12 @@ def load_model(model, model_dir):
     tokenizer_path = f"{model_dir}/tokenizer"
     model_path = f"{model_dir}/model"
     if not os.path.exists(model_dir):
-        AutoTokenizer.from_pretrained(model).save_pretrained(tokenizer_path)
-        AutoModelForSequenceClassification.from_pretrained(model).save_pretrained(model_path)
+        Tokenizer.from_pretrained(model).save_pretrained(tokenizer_path)
+        Model.from_pretrained(model).save_pretrained(model_path)
         print(f"\n{model} model and tokenizer saved in directory {model_dir}\n")
 
-    tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
-    model = AutoModelForSequenceClassification.from_pretrained(model_path)
+    tokenizer = Tokenizer.from_pretrained(tokenizer_path)
+    model = Model.from_pretrained(model_path)
     print(f"Model loaded from {model_dir}\n")
     return model, tokenizer
 
