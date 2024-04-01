@@ -6,13 +6,13 @@ from configs import (
     EPOCHS, BATCH_SIZE, INIT_LR, SCH_STEP, SCH_GAMMA,
     FLT_PREC, WHITE_SPACE
 )
-from utils import load_data, load_model, train_test_split, train_and_validate
+from utils import load_data, load_model, train_val_test_split, train_and_validate
 
 def main():
     print()
 
     data = load_data(DATA_PATHS, SHUFFLE)
-    train_data, val_data, test_data = train_test_split(data, TRAIN_RATIO, VAL_RATIO)
+    train_data, val_data, test_data = train_val_test_split(data, TRAIN_RATIO, VAL_RATIO)
 
     model, tokenizer = load_model(MODEL, MODEL_DIR)
 

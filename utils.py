@@ -54,7 +54,7 @@ def load_model(model, model_dir):
     print(f"Model loaded from {model_dir}\n")
     return model, tokenizer
 
-def train_test_split(data, train_ratio, val_ratio):
+def train_val_test_split(data, train_ratio, val_ratio):
     train_split = int(len(data) * train_ratio)
     train_data = data[:train_split]
     test_data = data[train_split:]
