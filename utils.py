@@ -8,11 +8,11 @@ warnings.filterwarnings("ignore")
 
 def load_data(data_paths, shuffle=False):
     """
-    Loads and shuffles data in a numpy array
+    Loads and shuffles data in a numpy array.
 
     ## Parameters
     `data_paths`: List of strings containing path to data files
-    `shuffle`: Boolean indicating whether to shuffle data (false by default)
+    `shuffle`: Boolean indicating whether to shuffle data
 
     ## Returns
     `np.ndarray` of shape `(None,)`
@@ -32,7 +32,7 @@ def load_data(data_paths, shuffle=False):
 
 def load_model(model, model_dir):
     """
-    Loads a Hugging Face model and tokenizer from the given checkpoint or a local directory
+    Loads a Hugging Face model and tokenizer from the given checkpoint or a local directory.
 
     ## Parameters
     `model`: Hugging Face checkpoint to download the model, if not found
@@ -55,6 +55,17 @@ def load_model(model, model_dir):
     return model, tokenizer
 
 def train_val_test_split(data, train_ratio, val_ratio):
+    """
+    Splits the data into train, validation, and test sets.
+
+    ## Parameters
+    `data`: Data to split
+    `train_ratio`: Fraction of train data in the whole data
+    `val_ratio`: Fraction of validation data in validation + test data
+
+    ## Returns
+    `train_data, val_data, test_data`
+    """
     train_split = int(len(data) * train_ratio)
     train_data = data[:train_split]
     test_data = data[train_split:]
@@ -76,7 +87,29 @@ def train_and_validate(
         sent_maxlen, optimizer, scheduler=None,
         batch_size=32, epochs=10, flt_prec=4, white_space=100
 ):
-    
+    """
+    Trains and validates a Hugging Face model. Train, validation, and test data should
+    be of the shape `(None, None)` with texts in first column and labels in second.
+
+    ## Parameters
+    `train_data`: Data to be used for training
+    `val_data`: Data to be used for validation
+    `test_data`: Data to be used for testing
+    `model`: Hugging Face model to be trained
+    `tokenizer`: Appropriate tokenizer for `model`
+    `sent_maxlen`: Maximum number of tokens in tokenized sentence
+    `optimizer`: Optimizer to use for `model`
+    `scheduler`: Scheduler to use for `optimizer`
+    `batch_size`: Batch size for training data
+    `epochs`: Number of epochs to train for
+    `flt_prec`: Floating point precision for stdout
+    `white_space`: Number of white spaces to print for clearing stdout
+
+    ## Returns
+    `train_loss`: List containing average training set loss over an epoch
+    `val_metrics`: Dictionary containing average validation loss, accuracy, and f1 score over an epoch
+    `test_metrics`: Dictionary containing test loss, accuracy, and f1 score
+    """
     if torch.cuda.is_available():
         device = torch.device("cuda")
     elif torch.backends.mps.is_available():
