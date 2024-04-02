@@ -2,7 +2,7 @@ import torch, matplotlib.pyplot as plt
 
 from configs import (
     DATA_PATHS, MODEL, MODEL_DIR, PLOT_PATH,
-    TRAIN_RATIO, VAL_RATIO, SENT_MAXLEN, SHUFFLE,
+    TRAIN_RATIO, VAL_RATIO, MAX_TOKENS, SHUFFLE,
     EPOCHS, BATCH_SIZE, INIT_LR, SCH_STEP, SCH_GAMMA,
     FLT_PREC, WHITE_SPACE
 )
@@ -21,7 +21,7 @@ def main():
 
     train_loss, val_metrics, test_metrics = train_and_validate(
         train_data, val_data, test_data, model, tokenizer,
-        SENT_MAXLEN, optimizer, scheduler,
+        MAX_TOKENS, optimizer, scheduler,
         BATCH_SIZE, EPOCHS, FLT_PREC, WHITE_SPACE
     )
 

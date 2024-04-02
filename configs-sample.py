@@ -10,7 +10,7 @@ MODEL = "distilbert/distilbert-base-uncased"
 # Data pre-processing parameters
 TRAIN_RATIO = 0.7
 VAL_RATIO = 0.5
-SENT_MAXLEN = 120
+MAX_TOKENS = 120
 SHUFFLE = True
 
 # Training parameters

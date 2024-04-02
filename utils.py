@@ -74,17 +74,26 @@ def train_val_test_split(data, train_ratio, val_ratio):
     test_data = test_data[val_split:]
     return train_data, val_data, test_data
 
-def tokenize_and_batch(data, tokenizer, sent_maxlen, batch_size=None):
+def tokenize_and_batch(data, tokenizer, max_tokens, batch_size=None):
+    """
+    Tokenizes and batches data.
+
+    ## Parameters
+    `data`: Data to be tokenized and batched, should be of shape `(None, None)`, texts in first column and labels in second
+    `tokenizer`: Tokenizer to tokenize texts
+    `max_tokens`: Maximum tokens in tokenized sentence
+    `batch_size`: Size of batches, only 1 batch created if set to `None`
+    """
     texts, labels = data[:, 0], data[:, 1].astype(np.float64)
-    tokenized = tokenizer(list(texts), padding=True, truncation=True, max_length=sent_maxlen, return_tensors="pt")
+    tokenized = tokenizer(list(texts), padding=True, truncation=True, max_length=max_tokens, return_tensors="pt")
     dataset = TensorDataset(tokenized["input_ids"], torch.tensor(labels).to(torch.int64), tokenized["attention_mask"])
-    if not batch_size:
-        return dataset.tensors
-    return DataLoader(dataset, batch_size=batch_size)
+    if batch_size:
+        return DataLoader(dataset, batch_size=batch_size)
+    return dataset.tensors
 
 def train_and_validate(
         train_data, val_data, test_data, model, tokenizer,
-        sent_maxlen, optimizer, scheduler=None,
+        max_tokens, optimizer, scheduler=None,
         batch_size=32, epochs=10, flt_prec=4, white_space=100
 ):
     """
@@ -97,7 +106,7 @@ def train_and_validate(
     `test_data`: Data to be used for testing
     `model`: Hugging Face model to be trained
     `tokenizer`: Appropriate tokenizer for `model`
-    `sent_maxlen`: Maximum number of tokens in tokenized sentence
+    `max_tokens`: Maximum tokens in tokenized sentence
     `optimizer`: Optimizer to use for `model`
     `scheduler`: Scheduler to use for `optimizer`
     `batch_size`: Batch size for training data
@@ -117,9 +126,9 @@ def train_and_validate(
     else:
         device = torch.device("cpu")
 
-    train_data = tokenize_and_batch(train_data, tokenizer, sent_maxlen, batch_size)
-    val_data = tokenize_and_batch(val_data, tokenizer, sent_maxlen)
-    test_data = tokenize_and_batch(test_data, tokenizer, sent_maxlen)
+    train_data = tokenize_and_batch(train_data, tokenizer, max_tokens, batch_size)
+    val_data = tokenize_and_batch(val_data, tokenizer, max_tokens)
+    test_data = tokenize_and_batch(test_data, tokenizer, max_tokens)
     batches = len(train_data)
     train_loss = []
     val_metrics = {"loss": [], "accuracy": [], "f1": []}
@@ -175,7 +184,15 @@ def train_and_validate(
 
     return train_loss, val_metrics, test_metrics
 
-def test_model(test_data, model, device):
+def test_model(test_data, model, device=torch.device("cpu")):
+    """
+    Tests model on testing data using metrics loss, accuracy, and f1 score.
+
+    ## Parameters
+    `test_data`: Testing data to be used
+    `model`: Model to be tested
+    `device`: PyTorch device to use
+    """
     test_inp, test_labels, test_mask = test_data
     test_inp = test_inp.to(device)
     test_labels = test_labels.to(device)
@@ -187,8 +204,17 @@ def test_model(test_data, model, device):
     predictions = torch.argmax(output.logits, dim=-1).cpu()
     return output.loss.item(), accuracy_score(test_labels, predictions), f1_score(test_labels, predictions)
 
-def toxicity_score(text, model, tokenizer, sent_maxlen):
-    tokenized = tokenizer([text], max_length=sent_maxlen, truncation=True, padding=True, return_tensors="pt")
+def toxicity_score(text, model, tokenizer, max_tokens):
+    """
+    Returns the toxicity score of a single sentence.
+
+    ## Parameters
+    `text`: Sentence
+    `model`: Model to use
+    `tokenizer`: Tokenizer associated to `model`
+    `max_tokens`: Maximum tokens in tokenized sentence
+    """
+    tokenized = tokenizer([text], max_length=max_tokens, truncation=True, padding=True, return_tensors="pt")
     with torch.no_grad():
         output = model(**tokenized)
     return torch.nn.functional.softmax(output.logits)[0, 1].item()
