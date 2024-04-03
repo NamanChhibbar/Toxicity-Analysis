@@ -12,7 +12,8 @@ warnings.filterwarnings("ignore")
 
 def load_data(data_paths, shuffle=False):
     """
-    Loads and shuffles data in a numpy array.
+    Loads and shuffles data in a numpy array. Data should be in csv or xlsx format with a
+    "text" column containing the text and "manual_label" column containing the label.
 
     ## Parameters
     `data_paths`: List of strings containing path to data files
@@ -23,8 +24,11 @@ def load_data(data_paths, shuffle=False):
     """
     all_texts, all_labels = [], []
     for path in data_paths:
-        df = pd.read_csv(path)
-        filter = pd.notnull(df["manual_label"])
+        _, extension = os.path.splitext(path)
+        match extension:
+            case ".csv": df = pd.read_csv(path)
+            case ".xlsx": df = pd.read_excel(path)
+        filter = pd.notnull(df["text"]) & pd.notnull(df["manual_label"])
         texts = df["text"][filter].tolist()
         labels = df["manual_label"][filter].tolist()
         all_texts.extend(texts)
@@ -32,6 +36,7 @@ def load_data(data_paths, shuffle=False):
         print(f"File loaded: {path}")
     print()
     data = np.stack((all_texts, all_labels), axis=1)
+    print(f"Data loaded of shape {data.shape}\n")
     return np.random.permutation(data) if shuffle else data
 
 def load_model(model, model_dir):
@@ -44,7 +49,8 @@ def load_model(model, model_dir):
     tokenizer should be saved as `{model_dir}/Model` and `{model_dir}/Tokenizer`
 
     ## Returns
-    `model, tokenizer` of type `Model` and `Tokenizer` (aliased)
+    `model, tokenizer` of type `transformers.AutoModelForSequenceClassification` and
+    `transformers.AutoTokenizer`
     """
     tokenizer_path = f"{model_dir}/tokenizer"
     model_path = f"{model_dir}/model"
@@ -196,6 +202,9 @@ def test_model(test_data, model, device=torch.device("cpu")):
     `test_data`: Testing data to be used
     `model`: Model to be tested
     `device`: PyTorch device to use
+
+    ## Returns
+    `loss, accuracy, f1_score`
     """
     test_inp, test_labels, test_mask = test_data
     test_inp = test_inp.to(device)
@@ -217,6 +226,9 @@ def toxicity_score(text, model, tokenizer, max_tokens):
     `model`: Model to use
     `tokenizer`: Tokenizer associated to `model`
     `max_tokens`: Maximum tokens in tokenized sentence
+
+    ## Returns
+    `float` between 0 and 1
     """
     tokenized = tokenizer([text], max_length=max_tokens, truncation=True, padding=True, return_tensors="pt")
     with torch.no_grad():
