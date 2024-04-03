@@ -1,3 +1,7 @@
+"""
+Contains utility functions for data and model loading, data pre-processing, model training and testing.
+"""
+
 import numpy as np, pandas as pd, torch, os, warnings
 from torch.utils.data import TensorDataset, DataLoader
 from transformers import AutoModelForSequenceClassification as Model, AutoTokenizer as Tokenizer
