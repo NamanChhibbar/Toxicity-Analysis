@@ -1,10 +1,15 @@
+"""
+Contains training loop configurations.
+"""
+
 # Data paths
 DATA_DIR = f"Sample-Data"
 DATA_FILES = [
     "sample.csv"
 ]
 
-# Make sure this is a valid Hugging Face model
+# Model to use
+# Should be a valid Hugging Face checkpoint
 MODEL = "distilbert/distilbert-base-uncased"
 
 # Data pre-processing parameters
@@ -26,8 +31,8 @@ WHITE_SPACE = 100
 
 
 
-################### DO NOT CHANGE ###################
 
+#################### DO NOT CHANGE ####################
 
 
 import os
@@ -38,3 +43,6 @@ MODEL_DIR = f"{PROJECT_DIR}/Models/{os.path.basename(MODEL)}"
 PLOT_PATH = f"{PROJECT_DIR}/Performance-Plots/{os.path.basename(MODEL)}.jpg"
 
 DATA_PATHS = [f"{PROJECT_DIR}/{DATA_DIR}/{file}" for file in DATA_FILES]
+
+
+#######################################################
