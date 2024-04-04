@@ -13,7 +13,7 @@ warnings.filterwarnings("ignore")
 def load_data(data_paths, shuffle=False):
     """
     Loads and shuffles data in a numpy array. Data should be in csv or xlsx format with a
-    "text" column containing the text and "manual_label" column containing the label.
+    "text" column containing the text and "toxicity_label" column containing the label.
 
     ## Parameters
     `data_paths`: List of strings containing path to data files
@@ -28,9 +28,10 @@ def load_data(data_paths, shuffle=False):
         match extension:
             case ".csv": df = pd.read_csv(path)
             case ".xlsx": df = pd.read_excel(path)
-        filter = pd.notnull(df["text"]) & pd.notnull(df["manual_label"])
+            case _: continue
+        filter = pd.notnull(df["text"]) & pd.notnull(df["toxicity_label"])
         texts = df["text"][filter].tolist()
-        labels = df["manual_label"][filter].tolist()
+        labels = df["toxicity_label"][filter].tolist()
         all_texts.extend(texts)
         all_labels.extend(labels)
         print(f"File loaded: {path}")

@@ -2,11 +2,8 @@
 Contains training loop configurations.
 """
 
-# Data paths
+# Path to directory containing data files relative to project directory
 DATA_DIR = f"Sample-Data"
-DATA_FILES = [
-    "sample.csv"
-]
 
 # Model to use
 # Should be a valid Hugging Face checkpoint
@@ -38,11 +35,12 @@ WHITE_SPACE = 100
 import os
 
 PROJECT_DIR = os.path.dirname(__file__)
+DATA_DIR = f"{PROJECT_DIR}/{DATA_DIR}"
 
 MODEL_DIR = f"{PROJECT_DIR}/Models/{os.path.basename(MODEL)}"
 PLOT_PATH = f"{PROJECT_DIR}/Performance-Plots/{os.path.basename(MODEL)}.jpg"
 
-DATA_PATHS = [f"{PROJECT_DIR}/{DATA_DIR}/{file}" for file in DATA_FILES]
+DATA_PATHS = [f"{DATA_DIR}/{file}" for file in os.listdir(DATA_DIR)]
 
 
 #######################################################

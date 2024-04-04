@@ -6,8 +6,7 @@ old-work/
 
 Models/
 Performance-Plots/
-Labeled-Data/
-Raw-Data/
+Data/
 
 temp.ipynb
 configs.py
