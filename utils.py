@@ -101,7 +101,7 @@ def tokenize_and_batch(data, tokenizer, max_tokens, batch_size=None):
         return DataLoader(dataset, batch_size=batch_size)
     return dataset.tensors
 
-def train_and_validate(
+def train_and_test(
         train_data, val_data, test_data, model, tokenizer,
         max_tokens, optimizer, scheduler=None,
         batch_size=32, epochs=10, flt_prec=4, white_space=100
