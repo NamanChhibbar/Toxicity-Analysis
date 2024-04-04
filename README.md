@@ -16,7 +16,7 @@ pip3 install -r requirements.txt
 
 ### Training configurations
 
-Before training the model, ensure that data file paths, model parameters, and other configurations are set up correctly in `configs.py`. You can use the provided sample configuration file [configs-sample.py](configs-sample.py) as a template. Rename it to `configs.py` and update the `DATA_DIR` and `DATA_FILES` variables accordingly.
+Before training the model, ensure that data file paths, model parameters, and other configurations are set up correctly in `configs.py`. You can use the provided sample configuration file [configs-sample.py](configs-sample.py) as a template. Rename it to `configs.py` and update `DATA_DIR` accordingly.
 
 ## Training the model
 
