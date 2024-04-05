@@ -10,6 +10,17 @@ from time import perf_counter
 
 warnings.filterwarnings("ignore")
 
+def get_torch_device():
+    """
+    ## Returns
+    `torch.device`: cuda or mps device if available, else cpu
+    """
+    if torch.cuda.is_available():
+        return torch.device("cuda")
+    elif torch.backends.mps.is_available():
+        return torch.device("mps")
+    return torch.device("cpu")
+
 def load_data(data_paths, shuffle=False):
     """
     Loads and shuffles data in a numpy array. Data should be in csv or xlsx format with a
@@ -130,12 +141,7 @@ def train_and_test(
     `val_metrics`: Dictionary containing average validation loss, accuracy, and f1 score over an epoch
     `test_metrics`: Dictionary containing test loss, accuracy, and f1 score
     """
-    if torch.cuda.is_available():
-        device = torch.device("cuda")
-    elif torch.backends.mps.is_available():
-        device = torch.device("mps")
-    else:
-        device = torch.device("cpu")
+    device = get_torch_device()
 
     train_data = tokenize_and_batch(train_data, tokenizer, max_tokens, batch_size)
     val_data = tokenize_and_batch(val_data, tokenizer, max_tokens)
