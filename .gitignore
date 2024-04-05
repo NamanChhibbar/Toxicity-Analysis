@@ -1,7 +1,7 @@
 .DS_store
 
 __pycache__/
-venv/
+.venv/
 old-work/
 
 Models/
