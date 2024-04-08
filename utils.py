@@ -163,7 +163,6 @@ def train_and_test(
             loss = model(input_ids=inp, labels=labels, attention_mask=attention_mask).loss
             loss.backward()
             optimizer.step()
-            if scheduler: scheduler.step()
             optimizer.zero_grad()
             time = (perf_counter() - start_time) * 1000
             epoch_loss += loss.item()
@@ -196,6 +195,9 @@ def train_and_test(
             f"Validation accuracy: {round(val_accuracy, flt_prec)}\n"
             f"Validation F1 = {round(val_f1, flt_prec)}\n"
         )
+        
+        if scheduler:
+            scheduler.step()
     test_loss, test_accuracy, test_f1 = test_model(test_data, model, device)
     test_metrics = {"loss": test_loss, "accuracy": test_accuracy, "f1": test_f1}
 
