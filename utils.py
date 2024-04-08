@@ -10,14 +10,14 @@ from time import perf_counter
 
 warnings.filterwarnings("ignore")
 
-def get_torch_device():
+def get_device():
     """
     ## Returns
     `torch.device`: cuda or mps device if available, else cpu
     """
     if torch.cuda.is_available():
         return torch.device("cuda")
-    elif torch.backends.mps.is_available():
+    if torch.backends.mps.is_available():
         return torch.device("mps")
     return torch.device("cpu")
 
@@ -141,7 +141,7 @@ def train_and_test(
     `val_metrics`: Dictionary containing average validation loss, accuracy, and f1 score over an epoch
     `test_metrics`: Dictionary containing test loss, accuracy, and f1 score
     """
-    device = get_torch_device()
+    device = get_device()
 
     train_data = tokenize_and_batch(train_data, tokenizer, max_tokens, batch_size)
     val_data = tokenize_and_batch(val_data, tokenizer, max_tokens)
