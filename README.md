@@ -8,6 +8,18 @@ This project focuses on analysing the toxicity and severity of toxic comments.
 
 ### Installing dependencies
 
+Using a python virtual environment is highly recommended. Create one using the following command:
+
+```zsh
+python3 -m venv .venv
+```
+
+Activate the virtual environment using:
+
+```zsh
+source .venv/bin/activate
+```
+
 To install the required Python packages, run the following command:
 
 ```zsh
@@ -16,7 +28,7 @@ pip3 install -r requirements.txt
 
 ### Training configurations
 
-Before training the model, ensure that data file paths, model parameters, and other configurations are set up correctly in `configs.py`. You can use the provided sample configuration file [configs-sample.py](configs-sample.py) as a template. Rename it to `configs.py` and update the `DATA_DIR` and `DATA_FILES` variables accordingly.
+Before training the model, ensure that data file paths, model parameters, and other configurations are set up correctly in `configs.py`. You can use the provided sample configuration file [configs-sample.py](configs-sample.py) as a template. Rename it to `configs.py` and update `DATA_DIR` accordingly.
 
 ## Training the model
 

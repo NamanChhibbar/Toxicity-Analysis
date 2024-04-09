@@ -10,9 +10,21 @@ from time import perf_counter
 
 warnings.filterwarnings("ignore")
 
+def get_device():
+    """
+    ## Returns
+    `torch.device`: cuda or mps device if available, else cpu
+    """
+    if torch.cuda.is_available():
+        return torch.device("cuda")
+    if torch.backends.mps.is_available():
+        return torch.device("mps")
+    return torch.device("cpu")
+
 def load_data(data_paths, shuffle=False):
     """
-    Loads and shuffles data in a numpy array.
+    Loads and shuffles data in a numpy array. Data should be in csv or xlsx format with a
+    "text" column containing the text and "toxicity_label" column containing the label.
 
     ## Parameters
     `data_paths`: List of strings containing path to data files
@@ -23,15 +35,20 @@ def load_data(data_paths, shuffle=False):
     """
     all_texts, all_labels = [], []
     for path in data_paths:
-        df = pd.read_csv(path)
-        filter = pd.notnull(df["manual_label"])
+        _, extension = os.path.splitext(path)
+        match extension:
+            case ".csv": df = pd.read_csv(path)
+            case ".xlsx": df = pd.read_excel(path)
+            case _: continue
+        filter = pd.notnull(df["text"]) & pd.notnull(df["toxicity_label"])
         texts = df["text"][filter].tolist()
-        labels = df["manual_label"][filter].tolist()
+        labels = df["toxicity_label"][filter].tolist()
         all_texts.extend(texts)
         all_labels.extend(labels)
         print(f"File loaded: {path}")
     print()
     data = np.stack((all_texts, all_labels), axis=1)
+    print(f"Data loaded of shape {data.shape}\n")
     return np.random.permutation(data) if shuffle else data
 
 def load_model(model, model_dir):
@@ -44,7 +61,8 @@ def load_model(model, model_dir):
     tokenizer should be saved as `{model_dir}/Model` and `{model_dir}/Tokenizer`
 
     ## Returns
-    `model, tokenizer` of type `Model` and `Tokenizer` (aliased)
+    `model, tokenizer` of type `transformers.AutoModelForSequenceClassification` and
+    `transformers.AutoTokenizer`
     """
     tokenizer_path = f"{model_dir}/tokenizer"
     model_path = f"{model_dir}/model"
@@ -95,7 +113,7 @@ def tokenize_and_batch(data, tokenizer, max_tokens, batch_size=None):
         return DataLoader(dataset, batch_size=batch_size)
     return dataset.tensors
 
-def train_and_validate(
+def train_and_test(
         train_data, val_data, test_data, model, tokenizer,
         max_tokens, optimizer, scheduler=None,
         batch_size=32, epochs=10, flt_prec=4, white_space=100
@@ -123,12 +141,7 @@ def train_and_validate(
     `val_metrics`: Dictionary containing average validation loss, accuracy, and f1 score over an epoch
     `test_metrics`: Dictionary containing test loss, accuracy, and f1 score
     """
-    if torch.cuda.is_available():
-        device = torch.device("cuda")
-    elif torch.backends.mps.is_available():
-        device = torch.device("mps")
-    else:
-        device = torch.device("cpu")
+    device = get_device()
 
     train_data = tokenize_and_batch(train_data, tokenizer, max_tokens, batch_size)
     val_data = tokenize_and_batch(val_data, tokenizer, max_tokens)
@@ -150,7 +163,6 @@ def train_and_validate(
             loss = model(input_ids=inp, labels=labels, attention_mask=attention_mask).loss
             loss.backward()
             optimizer.step()
-            if scheduler: scheduler.step()
             optimizer.zero_grad()
             time = (perf_counter() - start_time) * 1000
             epoch_loss += loss.item()
@@ -183,6 +195,9 @@ def train_and_validate(
             f"Validation accuracy: {round(val_accuracy, flt_prec)}\n"
             f"Validation F1 = {round(val_f1, flt_prec)}\n"
         )
+        
+        if scheduler:
+            scheduler.step()
     test_loss, test_accuracy, test_f1 = test_model(test_data, model, device)
     test_metrics = {"loss": test_loss, "accuracy": test_accuracy, "f1": test_f1}
 
@@ -196,6 +211,9 @@ def test_model(test_data, model, device=torch.device("cpu")):
     `test_data`: Testing data to be used
     `model`: Model to be tested
     `device`: PyTorch device to use
+
+    ## Returns
+    `loss, accuracy, f1_score`
     """
     test_inp, test_labels, test_mask = test_data
     test_inp = test_inp.to(device)
@@ -217,6 +235,9 @@ def toxicity_score(text, model, tokenizer, max_tokens):
     `model`: Model to use
     `tokenizer`: Tokenizer associated to `model`
     `max_tokens`: Maximum tokens in tokenized sentence
+
+    ## Returns
+    `float` between 0 and 1
     """
     tokenized = tokenizer([text], max_length=max_tokens, truncation=True, padding=True, return_tensors="pt")
     with torch.no_grad():

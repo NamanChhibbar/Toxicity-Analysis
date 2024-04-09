@@ -6,7 +6,7 @@ from configs import (
     EPOCHS, BATCH_SIZE, INIT_LR, SCH_STEP, SCH_GAMMA,
     FLT_PREC, WHITE_SPACE
 )
-from utils import load_data, load_model, train_val_test_split, train_and_validate
+from utils import load_data, load_model, train_val_test_split, train_and_test
 
 def main():
     print()
@@ -23,7 +23,7 @@ def main():
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=SCH_STEP, gamma=SCH_GAMMA, verbose=True)
 
     # Training loop
-    train_loss, val_metrics, test_metrics = train_and_validate(
+    train_loss, val_metrics, test_metrics = train_and_test(
         train_data, val_data, test_data, model, tokenizer,
         MAX_TOKENS, optimizer, scheduler,
         BATCH_SIZE, EPOCHS, FLT_PREC, WHITE_SPACE
