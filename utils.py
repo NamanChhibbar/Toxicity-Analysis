@@ -4,6 +4,7 @@ Contains utility functions for data and model loading, data pre-processing, mode
 
 import numpy as np, pandas as pd, torch, os, warnings
 from torch.utils.data import TensorDataset, DataLoader
+from torch.nn.functional import softmax
 from transformers import AutoModelForSequenceClassification as Model, AutoTokenizer as Tokenizer
 from sklearn.metrics import f1_score, accuracy_score
 from time import perf_counter
@@ -31,7 +32,7 @@ def load_data(data_paths, shuffle=False):
     `shuffle`: Boolean indicating whether to shuffle data
 
     ## Returns
-    `np.ndarray` of shape `(None,)`
+    `np.ndarray` of shape `(None, 2)`
     """
     all_texts, all_labels = [], []
     for path in data_paths:
@@ -66,14 +67,18 @@ def load_model(model, model_dir):
     """
     tokenizer_path = f"{model_dir}/tokenizer"
     model_path = f"{model_dir}/model"
-    if not os.path.exists(model_dir):
-        Tokenizer.from_pretrained(model).save_pretrained(tokenizer_path)
-        Model.from_pretrained(model).save_pretrained(model_path)
-        print(f"\n{model} model and tokenizer saved in directory {model_dir}\n")
 
-    tokenizer = Tokenizer.from_pretrained(tokenizer_path)
-    model = Model.from_pretrained(model_path)
-    print(f"Model loaded from {model_dir}\n")
+    if os.path.exists(model_dir):
+        tokenizer = Tokenizer.from_pretrained(tokenizer_path)
+        model = Model.from_pretrained(model_path)
+        print(f"Model loaded from {model_dir}\n")
+    else:
+        tokenizer = Tokenizer.from_pretrained(model)
+        model = Model.from_pretrained(model)
+        tokenizer.save_pretrained(tokenizer_path)
+        model.save_pretrained(model_path)
+        print(f"\nModel and tokenizer saved in directory {model_dir}\n")
+
     return model, tokenizer
 
 def train_val_test_split(data, train_ratio, val_ratio):
@@ -115,7 +120,7 @@ def tokenize_and_batch(data, tokenizer, max_tokens, batch_size=None):
 
 def train_and_test(
         train_data, val_data, test_data, model, tokenizer,
-        max_tokens, optimizer, scheduler=None,
+        max_tokens, optimizer, scheduler=None, device=torch.device("cpu"),
         batch_size=32, epochs=10, flt_prec=4, white_space=100
 ):
     """
@@ -141,7 +146,6 @@ def train_and_test(
     `val_metrics`: Dictionary containing average validation loss, accuracy, and f1 score over an epoch
     `test_metrics`: Dictionary containing test loss, accuracy, and f1 score
     """
-    device = get_device()
 
     train_data = tokenize_and_batch(train_data, tokenizer, max_tokens, batch_size)
     val_data = tokenize_and_batch(val_data, tokenizer, max_tokens)
@@ -152,8 +156,10 @@ def train_and_test(
     model.to(device)
 
     for epoch in range(epochs):
+
         model.train(True)
         epoch_loss = 0
+
         for batch, (inp, labels, attention_mask) in enumerate(train_data):
 
             inp = inp.to(device)
@@ -184,6 +190,10 @@ def train_and_test(
                 f"Time remaining: {hours}h {minutes}m {seconds}s",
                 end="\t\t"
             )
+
+        if scheduler:
+            scheduler.step()
+
         train_loss.append(epoch_loss / batches)
 
         val_loss, val_accuracy, val_f1 = test_model(val_data, model, device)
@@ -195,9 +205,7 @@ def train_and_test(
             f"Validation accuracy: {round(val_accuracy, flt_prec)}\n"
             f"Validation F1 = {round(val_f1, flt_prec)}\n"
         )
-        
-        if scheduler:
-            scheduler.step()
+
     test_loss, test_accuracy, test_f1 = test_model(test_data, model, device)
     test_metrics = {"loss": test_loss, "accuracy": test_accuracy, "f1": test_f1}
 
@@ -242,4 +250,20 @@ def toxicity_score(text, model, tokenizer, max_tokens):
     tokenized = tokenizer([text], max_length=max_tokens, truncation=True, padding=True, return_tensors="pt")
     with torch.no_grad():
         output = model(**tokenized)
-    return torch.nn.functional.softmax(output.logits)[0, 1].item()
+    return softmax(output.logits)[0, 1].item()
+
+def load_time_series(data_path, date_column, columns):
+    _, extension = os.path.splitext(data_path)
+    match extension:
+        case ".csv": data = pd.read_csv(data_path, parse_dates=[date_column])
+        case ".xlsx": data = pd.read_excel(data_path, parse_dates=[date_column])
+    data[date_column] = pd.to_datetime(data[date_column].dt.date)
+    data.index = data[date_column]
+    data = data.resample("d")[*columns].sum()
+    return data
+
+def differenced_series(series, diff=1):
+    for _ in range(diff):
+        series = series.diff()
+    filt = pd.notna(series)
+    return series[filt]

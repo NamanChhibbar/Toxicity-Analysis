@@ -6,7 +6,7 @@ from configs import (
     EPOCHS, BATCH_SIZE, INIT_LR, SCH_STEP, SCH_GAMMA,
     FLT_PREC, WHITE_SPACE
 )
-from utils import load_data, load_model, train_val_test_split, train_and_test
+from utils import load_data, load_model, train_val_test_split, get_device, train_and_test
 
 def main():
     print()
@@ -22,10 +22,13 @@ def main():
     optimizer = torch.optim.Adam(model.parameters(), lr=INIT_LR)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=SCH_STEP, gamma=SCH_GAMMA, verbose=True)
 
+    # Get PyTorch device
+    device = get_device()
+
     # Training loop
     train_loss, val_metrics, test_metrics = train_and_test(
         train_data, val_data, test_data, model, tokenizer,
-        MAX_TOKENS, optimizer, scheduler,
+        MAX_TOKENS, optimizer, scheduler, device,
         BATCH_SIZE, EPOCHS, FLT_PREC, WHITE_SPACE
     )
 
@@ -39,11 +42,11 @@ def main():
     plt.ylabel("Metric")
     plt.legend()
     plt.savefig(PLOT_PATH)
-    print(f"Performance plot saved as {PLOT_PATH}")
+    print(f"Performance plot saved at {PLOT_PATH}")
 
     # Save fine-tuned model
     model.save_pretrained(f"{MODEL_DIR}/model")
-    print(f"{MODEL} model trained and saved in {MODEL_DIR}\n")
+    print(f"Model trained and saved in {MODEL_DIR}\n")
 
     # Print test metrics
     print(
