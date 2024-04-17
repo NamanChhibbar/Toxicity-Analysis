@@ -1,26 +1,31 @@
 import torch, matplotlib.pyplot as plt
 
 from configs import (
-    DATA_PATHS, MODEL, MODEL_DIR, PLOT_PATH,
-    TRAIN_RATIO, VAL_RATIO, MAX_TOKENS, SHUFFLE,
-    EPOCHS, BATCH_SIZE, INIT_LR, SCH_STEP, SCH_GAMMA,
-    FLT_PREC, WHITE_SPACE
+    DATA_PATHS, MODEL, MODEL_DIR, PLOT_PATH, TRAIN_RATIO,
+    VAL_RATIO, MAX_TOKENS, SHUFFLE, EPOCHS, BATCH_SIZE, INIT_LR,
+    SCH_STEP, SCH_GAMMA, FLT_PREC, WHITE_SPACE
 )
-from utils import load_data, load_model, train_val_test_split, get_device, train_and_test
+from utils import (
+    load_data, load_model, train_val_test_split, get_device, train_and_test
+)
 
 def main():
     print()
 
     # Load data
     data = load_data(DATA_PATHS, SHUFFLE)
-    train_data, val_data, test_data = train_val_test_split(data, TRAIN_RATIO, VAL_RATIO)
+    train_data, val_data, test_data = train_val_test_split(
+        data, TRAIN_RATIO, VAL_RATIO
+    )
 
     # Load model and tokenizer
     model, tokenizer = load_model(MODEL, MODEL_DIR)
 
     # Optimizer and scheduler
     optimizer = torch.optim.Adam(model.parameters(), lr=INIT_LR)
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=SCH_STEP, gamma=SCH_GAMMA, verbose=True)
+    scheduler = torch.optim.lr_scheduler.StepLR(
+        optimizer, step_size=SCH_STEP, gamma=SCH_GAMMA, verbose=True
+    )
 
     # Get PyTorch device
     device = get_device()

@@ -253,6 +253,17 @@ def toxicity_score(text, model, tokenizer, max_tokens):
     return softmax(output.logits)[0, 1].item()
 
 def load_time_series(data_path, date_column, columns):
+    """
+    Loads time series from a csv or excel file.
+
+    ## Parameters
+    `data_path`: Path to data file
+    `date_column`: Column to parse date indices
+    `columns`: Columns to be imported
+
+    ## Returns
+    `data`: Dataframe containing time series with date index
+    """
     _, extension = os.path.splitext(data_path)
     match extension:
         case ".csv": data = pd.read_csv(data_path, parse_dates=[date_column])
@@ -263,6 +274,16 @@ def load_time_series(data_path, date_column, columns):
     return data
 
 def differenced_series(series, diff=1):
+    """
+    Differentiates a time series.
+
+    ## Parameters
+    `series`: Pandas series to differentiate
+    `diff`: Number of times to differentiate
+
+    ## Returns
+    `series`: Differenced series
+    """
     for _ in range(diff):
         series = series.diff()
     filt = pd.notna(series)
