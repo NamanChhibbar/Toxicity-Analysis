@@ -1,4 +1,5 @@
-import torch, matplotlib.pyplot as plt
+import torch
+import matplotlib.pyplot as plt
 
 from configs import (
     DATA_PATHS, MODEL, MODEL_DIR, PLOT_PATH, TRAIN_RATIO,
@@ -60,6 +61,7 @@ def main():
         f"Test accuracy = {round(test_metrics["accuracy"], FLT_PREC)}\n"
         f"Test F1 score = {round(test_metrics["f1"], FLT_PREC)}\n"
     )
+
 
 if __name__ == "__main__":
     main()

@@ -1,11 +1,17 @@
 """
 Contains utility functions for data and model loading, data pre-processing, model training and testing.
 """
-
-import numpy as np, pandas as pd, torch, os, warnings
+import os
+import warnings
+import numpy as np
+import pandas as pd
+import torch
 from torch.utils.data import TensorDataset, DataLoader
 from torch.nn.functional import softmax
-from transformers import AutoModelForSequenceClassification as Model, AutoTokenizer as Tokenizer
+from transformers import (
+    AutoModelForSequenceClassification as Model,
+    AutoTokenizer as Tokenizer
+)
 from sklearn.metrics import f1_score, accuracy_score
 from time import perf_counter
 
