@@ -10,19 +10,19 @@ This project focuses on analysing the toxicity and severity of toxic comments.
 
 Using a python virtual environment is highly recommended. Create one using the following command:
 
-```zsh
+```sh
 python3 -m venv .venv
 ```
 
 Activate the virtual environment using:
 
-```zsh
+```sh
 source .venv/bin/activate
 ```
 
 To install the required Python packages, run the following command:
 
-```zsh
+```sh
 pip3 install -r requirements.txt
 ```
 
